@@ -10,6 +10,7 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geographic_msgs)
 find_package(action_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 nav2_package()
 
@@ -17,6 +18,7 @@ nav2_package()
 add_compile_options(-Wno-error=deprecated)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  # Messages
   "msg/CollisionMonitorState.msg"
   "msg/CollisionDetectorState.msg"
   "msg/Costmap.msg"
@@ -34,6 +36,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/RouteNode.msg"
   "msg/RouteEdge.msg"
   "msg/EdgeCost.msg"
+  "msg/WeatherState.msg"
+  # Services
   "srv/GetCost.srv"
   "srv/GetCostmap.srv"
   "srv/IsPathValid.srv"
@@ -49,6 +53,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetRouteGraph.srv"
   "srv/DynamicEdges.srv"
   "srv/Toggle.srv"
+  "srv/GetWeatherCondition.srv"
+  # Actions
   "action/AssistedTeleop.action"
   "action/BackUp.action"
   "action/ComputePathToPose.action"
@@ -68,7 +74,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "action/FollowObject.action"
   "action/DockRobot.action"
   "action/UndockRobot.action"
-  DEPENDENCIES builtin_interfaces geometry_msgs std_msgs action_msgs nav_msgs geographic_msgs
+  DEPENDENCIES builtin_interfaces geometry_msgs std_msgs action_msgs nav_msgs geographic_msgs sensor_msgs
 )
 
 ament_export_dependencies(rosidl_default_runtime)
