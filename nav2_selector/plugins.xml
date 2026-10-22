@@ -1,0 +1,7 @@
+<class_libraries>
+<library path="costmap_selector">
+	<class name="nav2_selector::CostmapSelector" type="nav2_selector::CostmapSelector" base_class_type="nav2_core::Selector">
+	  <description>A selector based on costmap</description>
+	</class>
+</library>
+</class_libraries>
