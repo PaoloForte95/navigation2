@@ -65,21 +65,31 @@ std::string
 NavigateThroughPosesNavigator::getDefaultBTFilepath(
   rclcpp_lifecycle::LifecycleNode::WeakPtr parent_node)
 {
-  std::string default_bt_xml_filename;
   auto node = parent_node.lock();
 
-  if (!node->has_parameter("default_nav_through_poses_bt_xml")) {
-    std::string pkg_share_dir =
-      ament_index_cpp::get_package_share_directory("nav2_bt_navigator");
-    node->declare_parameter<std::string>(
-      "default_nav_through_poses_bt_xml",
-      pkg_share_dir +
-      "/behavior_trees/navigate_through_poses_w_replanning_and_recovery.xml");
+  if (!node) {
+    throw std::runtime_error("Failed to lock parent node in getDefaultBTFilepath");
   }
 
-  node->get_parameter("default_nav_through_poses_bt_xml", default_bt_xml_filename);
+  if (!node->has_parameter("package_name")) {
+    node->declare_parameter<std::string>("package_name", "nav2_bt_navigator");
+  }
+  auto package_name = node->get_parameter("package_name").as_string();
 
-  return default_bt_xml_filename;
+  if (!node->has_parameter("default_nav_through_poses_bt_xml")) {
+    node->declare_parameter<std::string>(
+      "default_nav_through_poses_bt_xml",
+      "behavior_trees/navigate_through_poses_w_replanning_and_recovery.xml");
+  }
+  auto relative_path = node->get_parameter("default_nav_through_poses_bt_xml").as_string();
+
+  std::string pkg_share_dir = ament_index_cpp::get_package_share_directory(package_name);
+
+  if (!relative_path.empty() && relative_path.front() == '/') {
+    relative_path.erase(0, 1);
+  }
+
+  return pkg_share_dir + "/" + relative_path;
 }
 
 bool
