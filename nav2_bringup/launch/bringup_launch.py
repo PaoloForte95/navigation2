@@ -1,17 +1,3 @@
-# Copyright (c) 2018 Intel Corporation
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import os
 
 from ament_index_python.packages import get_package_share_directory
@@ -36,6 +22,9 @@ def generate_launch_description():
     # Get the launch directory
     bringup_dir = get_package_share_directory('nav2_bringup')
     launch_dir = os.path.join(bringup_dir, 'launch')
+    human_detection_dir = get_package_share_directory('nav2_human_detection')
+    weather_detection_dir = get_package_share_directory('nav2_weather_detection')
+    realsense_dir = get_package_share_directory('realsense2_camera')
 
     # Create the launch configuration variables
     namespace = LaunchConfiguration('namespace')
@@ -49,6 +38,8 @@ def generate_launch_description():
     use_respawn = LaunchConfiguration('use_respawn')
     log_level = LaunchConfiguration('log_level')
     use_localization = LaunchConfiguration('use_localization')
+    use_human_detection = LaunchConfiguration('use_human_detection')
+    use_weather_detection = LaunchConfiguration('use_weather_detection')
 
     # Map fully qualified names to relative ones so the node's namespace can be prepended.
     # In case of the transforms (tf), currently, there doesn't seem to be a better alternative
@@ -139,6 +130,18 @@ def generate_launch_description():
         'log_level', default_value='info', description='log level'
     )
 
+    declare_use_human_detection_cmd = DeclareLaunchArgument(
+        'use_human_detection',
+        default_value='True',
+        description='Whether to start the human detector',
+    )
+
+    declare_use_weather_detection_cmd = DeclareLaunchArgument(
+        'use_weather_detection',
+        default_value='True',
+        description='Whether to start the weather detector',
+    )
+
     # Specify the actions
     bringup_cmd_group = GroupAction(
         [
@@ -199,6 +202,51 @@ def generate_launch_description():
         ]
     )
 
+    realsense_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(realsense_dir, 'launch', 'rs_launch.py')
+        ),
+        launch_arguments={
+            'camera_namespace': namespace,
+            'camera_name': 'camera',
+            'align_depth.enable': 'true',
+            'rgb_camera.color_profile': '640x480x30',
+            'depth_module.depth_profile': '640x480x30',
+        }.items(),
+    )
+
+    human_detection_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(human_detection_dir, 'launch', 'human_detection_launch.py')
+        ),
+        condition=IfCondition(use_human_detection),
+        launch_arguments={
+            'namespace': namespace,
+            'use_sim_time': use_sim_time,
+            'autostart': autostart,
+            'params_file': os.path.join(
+                human_detection_dir, 'params', 'human_detector_params.yaml'),
+            'use_respawn': 'True',
+            'log_level': log_level,
+        }.items(),
+    )
+
+    weather_detection_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(weather_detection_dir, 'launch', 'weather_detection_launch.py')
+        ),
+        condition=IfCondition(use_weather_detection),
+        launch_arguments={
+                    'namespace': namespace,
+                    'use_sim_time': use_sim_time,
+                    'autostart': autostart,
+                    'params_file': os.path.join(
+                       weather_detection_dir, 'params', 'weather_detector_params.yaml'),
+                    'use_respawn': 'True',
+                    'log_level': log_level,
+                }.items(),
+    )  
+
     # Create the launch description and populate
     ld = LaunchDescription()
 
@@ -217,8 +265,13 @@ def generate_launch_description():
     ld.add_action(declare_use_respawn_cmd)
     ld.add_action(declare_log_level_cmd)
     ld.add_action(declare_use_localization_cmd)
+    ld.add_action(declare_use_human_detection_cmd)
+    ld.add_action(declare_use_weather_detection_cmd)
 
     # Add the actions to launch all of the navigation nodes
     ld.add_action(bringup_cmd_group)
+    ld.add_action(realsense_cmd)
+    ld.add_action(human_detection_cmd)
+    ld.add_action(weather_detection_cmd)
 
     return ld
