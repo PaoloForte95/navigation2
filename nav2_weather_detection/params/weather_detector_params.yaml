@@ -1,0 +1,7 @@
+weather_detector:
+  ros__parameters:
+    use_sim_time: True
+    topic: "weather_condition"
+    speed_limit_topic: "<robot_namespace>/speed_limit"
+    percentage: true # Setting speed limit in percentage if true or in absolute values in false case
+    slowdown_ratio: 30.0 #Percent of maximum allowed speed
