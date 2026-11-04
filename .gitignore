@@ -54,3 +54,7 @@ cmake-build-debug/
 
 # doxygen docs
 doc/html/
+
+
+#Models
+*.onnx
